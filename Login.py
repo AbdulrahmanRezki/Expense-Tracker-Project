@@ -3,7 +3,8 @@ import sqlite3
 
 
 def login():
-    
+
+
     #Desgin page:
     loginLayout = [
         [GUI.Text("Enter your username & password:")],
@@ -12,6 +13,18 @@ def login():
         [GUI.Button("Login"), GUI.Button("Cancel")]
     ]
 
+
+
+
+
+    layoutInvalid = [[GUI.Text("Invalid Logins.")]]
+    window3 = GUI.Window("Faliure Login", layoutInvalid)
+    
+    
+
+    
+    
+    
 
     while True:
         # Display the login window and wait for user interaction
@@ -26,18 +39,33 @@ def login():
         
         elif event2 == "Login":
             
-            #connect to database
-            #con = sqlite3.connect("loginList.db")
+            username = values['username']
+            password = values['password'] 
+            
+            con = sqlite3.connect("loginList.db")
+            cur = con.cursor()
     
             #Check if credientals are in database
-            with open("loginList.db", "r") as f:
-                for row in f:
-                    for col in row:
-                        print(col)
-                break   
+            try:
+                for row in cur.execute(f"SELECT {username} , {password} "):
+                    print(row)
+                    
+                window2.close()
+                break
+        
             
+            except:
+                
+                
+                
+                
+                
+                print("error occured here")
+                event3, values3 = window3.read()
+                
+                if event3 == GUI.WIN_CLOSED or event3 == 'Cancel':
+                    break
     #if username & password in database
     #go into the next page (undecided yet)
     
     #else, print unable to sign in and loop again.
-    pass

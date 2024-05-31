@@ -3,6 +3,8 @@ import os.path
 import sqlite3 
 
 def check_table_exists(conn, table_name):
+    
+    
     cur = conn.cursor()
     # Query the sqlite_master table to check for the existence of the table
     cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
@@ -37,7 +39,7 @@ def Register():
             table_exists = check_table_exists(conn, 'List')
             
             if os.path.isfile('loginList.db') and table_exists:
-                conn.execute("INSERT INTO List (username, password) VALUES (?, ?)", (username + '|', password+ '\n'))   # Use parameterized queries to prevent SQL injection attacks
+                conn.execute("INSERT INTO List (username, password) VALUES (?, ?)", (username, password+ '\n'))   # Use parameterized queries to prevent SQL injection attacks
                 conn.commit()
                 conn.close()
                 window2.close()
@@ -45,7 +47,7 @@ def Register():
             else:
                 conn = sqlite3.connect('loginList.db') 
                 conn.execute("CREATE TABLE List (username TEXT, password TEXT)")
-                conn.execute("INSERT INTO List (username, password) VALUES (?, ?)", (username + '|', password+'\n'))   # Use parameterized queries to prevent SQL injection attacks
+                conn.execute("INSERT INTO List (username, password) VALUES (?, ?)", (username, password+'\n'))   # Use parameterized queries to prevent SQL injection attacks
                 conn.commit()
                 conn.close()
                 window2.close()
