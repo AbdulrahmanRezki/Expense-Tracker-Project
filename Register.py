@@ -1,93 +1,60 @@
-import PySimpleGUI as GUI 
+import PySimpleGUI as GUI
 import os.path
-import sqlite3 
+import sqlite3
+import hashlib
+
+def hash_password(password):
+    # Simple hashing function for demonstration purposes
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def check_table_exists(conn, table_name):
-    
-    
     cur = conn.cursor()
-    # Query the sqlite_master table to check for the existence of the table
     cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
     result = cur.fetchone()
-    # Return True if the table exists, False otherwise
     return result is not None
 
-#Main
 def Register():
-    # Define the layout for the login window
+    # Define the layout for the registration window
     loginLayout = [
         [GUI.Text("Enter your username & password:")],
         [GUI.Text('Username: '), GUI.Input(key='username')],
-        [GUI.Text('Password: '), GUI.Input(key='password')],
+        [GUI.Text('Password: '), GUI.Input(key='password', password_char='*')],
         [GUI.Button("Register"), GUI.Button("Cancel")]
     ]
 
     while True:
-        # Display the login window and wait for user interaction
+        # Display the registration window and wait for user interaction
         window2 = GUI.Window("Register Portal", loginLayout)
         event2, values = window2.read()
+        window2.close()
 
-        if event2 == "Cancel":
-            # Close the window and break out of the loop if Cancel button is clicked
-            window2.close()  # Closing the window for a better user experience
-            break 
+        if event2 == "Cancel" or event2 == GUI.WIN_CLOSED:
+            break
 
         elif event2 == "Register":
-            username = values['username']
-            password = values['password']
-            conn = sqlite3.connect('loginList.db') 
-            table_exists = check_table_exists(conn, 'List')
-            
-            if os.path.isfile('loginList.db') and table_exists:
-                conn.execute("INSERT INTO List (username, password) VALUES (?, ?)", (username, password+ '\n'))   # Use parameterized queries to prevent SQL injection attacks
-                conn.commit()
-                conn.close()
-                window2.close()
-            
-            else:
-                conn = sqlite3.connect('loginList.db') 
-                conn.execute("CREATE TABLE List (username TEXT, password TEXT)")
-                conn.execute("INSERT INTO List (username, password) VALUES (?, ?)", (username, password+'\n'))   # Use parameterized queries to prevent SQL injection attacks
-                conn.commit()
-                conn.close()
-                window2.close()
+            username = values['username'].strip()
+            password = values['password'].strip()
+            hashed_password = hash_password(password)
 
-            # Display a success message after logging in
+            print(f"Debug: Input username: {username}")
+            print(f"Debug: Input hashed password: {hashed_password}")
+
+            conn = sqlite3.connect('loginList.db')
+            table_exists = check_table_exists(conn, 'List')
+
+            if not table_exists:
+                conn.execute("CREATE TABLE List (username TEXT, password TEXT)")
+
+            conn.execute("INSERT INTO List (username, password) VALUES (?, ?)", (username, hashed_password))
+            conn.commit()
+            conn.close()
+
+            # Display a success message after registration
             RegSuccessfully = [
                 [GUI.Text("Registered successfully!")],
+                [GUI.Button("OK")]
             ]
-            
-            while True:
-                # Display the success message window
-                windowSuc = GUI.Window("Register DONE: ", RegSuccessfully)
-                eventSuc, values = windowSuc.read()
-                break  # Exit the inner loop after showing the success message window
-            break  # Exit the outer loop after successful login
-
-
-# Known Issues:
-
-# 1. Proper Window Closing:
-# The main registration window (`window2`) does not handle the window close event (`GUI.WIN_CLOSED`).
-
-
-# 2. Repetitive Opening of SQLite Connection:
-# The SQLite connection is opened multiple times within the else block.
-
-
-# 3. Success Message Window Closing:
-# The success message window (`windowSuc`) does not handle the window close event (`GUI.WIN_CLOSED`).
-
-
-# 4. Using Context Manager for SQLite Connection:
-# Not using a context manager for the SQLite connection can lead to database locks and issues with proper closure.
-
-
-# 5. Inconsistent Closing Logic:
-# Multiple `window2.close()` calls in both if and else blocks can be redundant and lead to inconsistent behavior.
-
-
-
-
-
-
+            windowSuc = GUI.Window("Register DONE: ", RegSuccessfully)
+            windowSuc.read()
+            windowSuc.close()
+            break

@@ -1,59 +1,35 @@
 import PySimpleGUI as GUI  # This library is chosen for its minimal GUI handling requirements.
-import sqlite3
-import os.path
 import Register
 import Login
 
-#MAIN
-
-
-# Provide options for users to log in, register, or cancel
 # Layout for the initial authentication window
 layout = [
-        [GUI.Text("Login/Register")],
-        [GUI.Button("Login")],
-        [GUI.Button("Register")],
-        [GUI.Button("Cancel")]
+    [GUI.Text("Login/Register")],
+    [GUI.Button("Login")],
+    [GUI.Button("Register")],
+    [GUI.Button("Cancel")]
 ]
-conn = sqlite3.connect("loginList.db")
 
 while True:
     # Display the authentication window and wait for user interaction
     window = GUI.Window("Portal: ", layout)
     event, values = window.read()
+    window.close()
 
     if event == "Login":
-        # Close the current window and initiate the login process
-        window.close()
-        Login.login()  # Refer to the Login function for further comments and explanation
+        # Initiate the login process
+        Login.login()
         break
 
-    if event == "Register":
-        window.close()# Close the current window and initiate the register process
+    elif event == "Register":
         # Initiate the user registration process
-        Register.Register()  # Refer to the Register function for further comments and explanation
+        Register.Register()
         break
 
-    if event == "Cancel":
-        # Exit the loop and terminate the authentication process if Cancel button is clicked
+    elif event == "Cancel" or event == GUI.WIN_CLOSED:
         break
 
-        
-    
-        
-
-        
-
-
-
-
-
-
-
-
-
-
-
+print("Program Terminated")
 
 
 
