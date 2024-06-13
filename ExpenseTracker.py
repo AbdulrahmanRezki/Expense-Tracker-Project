@@ -1,57 +1,42 @@
 import PySimpleGUI as GUI  # This library is chosen for its minimal GUI handling requirements.
-import Register
-import Login
+import Register  # Importing the Register module
+import Login  # Importing the Login module
 
 # Layout for the initial authentication window
 layout = [
-    [GUI.Text("Login/Register")],
-    [GUI.Button("Login")],
-    [GUI.Button("Register")],
-    [GUI.Button("Cancel")]
+    [GUI.Text("Login/Register")],  # Displaying the title text
+    [GUI.Button("Login")],  # Button for initiating the login process
+    [GUI.Button("Register")],  # Button for initiating the registration process
+    [GUI.Button("Cancel")]  # Button for cancelling the operation and exiting
 ]
 
 while True:
-    # Display the authentication window and wait for user interaction
+    # Create and display the authentication window
     window = GUI.Window("Portal: ", layout)
+    # Wait for user interaction and read the event and values
     event, values = window.read()
+    # Close the window after reading the event
     window.close()
 
     if event == "Login":
-        # Initiate the login process
+        # If the "Login" button is clicked, initiate the login process
         Login.login()
-        break
+        break  # Exit the loop after handling the event
 
     elif event == "Register":
-        # Initiate the user registration process
+        # If the "Register" button is clicked, initiate the user registration process
         Register.Register()
-        break
+        break  # Exit the loop after handling the event
 
     elif event == "Cancel" or event == GUI.WIN_CLOSED:
+        # If the "Cancel" button is clicked or the window is closed, exit the loop
         break
 
+# Print a message indicating that the program has terminated
 print("Program Terminated")
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-#    - Store the username and a securely hashed password in the database
-
-
-
-# 2. Implement a login system:
-#    - Prompt users to enter their username and password
-#    - Verify credentials against stored information
-#    - Grant access upon successful authentication
 
 # Expense Recording:
 # 3. Create a form/interface for users to add expenses
