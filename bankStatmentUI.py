@@ -1,9 +1,10 @@
-import pandas as pd
+import tabula
 import PySimpleGUI as GUI
 from PyPDF2 import PdfReader, PdfWriter
 
 # Function to create a new PDF by copying pages from the original
 def create_decrypted_pdf():
+    
     writer = PdfWriter()
     
     # Add all pages from the reader to the writer
@@ -13,6 +14,32 @@ def create_decrypted_pdf():
     # Save the new PDF to a file
     with open("decrypted-pdf.pdf", "wb") as f:
         writer.write(f)
+    
+    # Read table data from the new PDF
+    try:
+        readingTableData("decrypted-pdf.pdf")
+    except Exception as e:
+        print(f"Error reading table data: {e}")
+
+    
+
+
+        
+
+
+
+def readingTableData(file):
+    
+    readFile = tabula.read_pdf(file, pages="all") # function to read data stored as a csv file into a pandas DataFrame
+    print(readFile)
+    
+
+
+
+
+
+
+
 
 # Get the file path from the user
 file_path = GUI.popup_get_file('Please enter a filename')
@@ -42,6 +69,7 @@ if pdf_reader.is_encrypted:
             pdf_reader.decrypt(password)
             # Create the decrypted PDF
             create_decrypted_pdf()
+
             break
         
         except Exception as e:
