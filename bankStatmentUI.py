@@ -4,7 +4,6 @@ from PyPDF2 import PdfReader, PdfWriter
 import pandas as pd
 import sqlite3
 
-
 # Function to create a new PDF by copying pages from the original
 def create_decrypted_pdf():
     writer = PdfWriter()
@@ -22,7 +21,6 @@ def create_decrypted_pdf():
         Table("decrypted-pdf.pdf")
     except Exception as e:
         print(f"Error reading table data: {e}")
-
 
 def Table(file):
     # Read data stored as a csv file into a pandas DataFrame
@@ -52,9 +50,22 @@ def Table(file):
     # Display the cleaned DataFrame (for debug purposes)
     print(combined_df)
 
+    # Extract and store the Debit and Date columns in lists
+    if 'Debit' in combined_df.columns and 'Date' in combined_df.columns:
+        debit_list = combined_df['Debit'].tolist()
+        date_list = combined_df['Date'].tolist()
+        print("Debit List:")
+        print(debit_list)
+        print("Date List:")
+        print(date_list)
+        # Store the debit and date lists for further use or return them if needed
+        return debit_list, date_list
+    else:
+        print("Debit or Date column not found in the DataFrame")
+        return [], []
+
     # Save cleaned data to SQLite database
     save_to_database(combined_df)
-
 
 def clean_data(df):
     # Step 1: Drop columns that are completely empty
@@ -84,7 +95,6 @@ def clean_data(df):
 
     return df
 
-
 def save_to_database(df):
     con = sqlite3.connect("table.db")
     cur = con.cursor()
@@ -99,11 +109,10 @@ def save_to_database(df):
     """)
 
     for _, row in df.iterrows():
-        cur.execute("INSERT INTO transactions VALUES (?, ?, ?, ?, ?)", row[:5])
+        cur.execute("INSERT INTO transactions VALUES (?, ?, ?, ?, ?)", row[:5]) # ? as placeholders to avoid sql attacks
 
     con.commit()
     con.close()
-
 
 # Get the file path from the user
 file_path = GUI.popup_get_file('Please enter a filename')
