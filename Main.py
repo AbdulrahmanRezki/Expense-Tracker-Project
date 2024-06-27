@@ -23,6 +23,7 @@ while True:
         Login.login()
         break  # Exit the loop after handling the event
 
+
     elif event == "Register":
         # If the "Register" button is clicked, initiate the user registration process
         Register.Register()

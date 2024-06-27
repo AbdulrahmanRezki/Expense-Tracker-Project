@@ -1,6 +1,7 @@
 import PySimpleGUI as GUI  # Importing the PySimpleGUI library for GUI handling
 import sqlite3  # Importing the sqlite3 library for database handling
 import hashlib  # Importing the hashlib library for password hashing
+from bankStatmentUI import assas #if succefully logged in it will display this module
 
 def hash_password(password):
     # Function to hash a password using SHA-256
@@ -62,6 +63,7 @@ def login():
                 if stored_password == hashed_password:
                     # If the stored password matches the entered hashed password, login is successful
                     print("Login successful")
+                    assas()
                     break
                 else:
                     # If the passwords do not match, display an invalid login message
