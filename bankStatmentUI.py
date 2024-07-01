@@ -4,108 +4,102 @@ from PyPDF2 import PdfReader, PdfWriter
 import pandas as pd
 import sqlite3
 import matplotlib.pyplot as plt
+import smtplib
+import faulthandler
+import logging
+import matplotlib as mpl
+
+mpl.use('tkagg')# used to display the plot in a Tkinter window. To avoid segmentation fault when plt.show() in Mac command line
+
+faulthandler.enable()
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, filename='debug.log', filemode='w', format='%(asctime)s - %(message)s')
+
+def emailSender(var):
+    logging.debug('Entering emailSender function')
+    response = GUI.popup_yes_no('Do you want to enter your email?')
+    if response == 'No':
+        logging.debug('User chose not to enter an email')
+        return  # Avoid calling exit() here
+    logging.debug('Email address prompt displayed')
+
 
 def create_decrypted_pdf(pdf_reader):
-    """
-    Create a decrypted copy of the PDF and extract tables from it.
-    """
+    logging.debug('Entering create_decrypted_pdf function')
     writer = PdfWriter()
-
-    # Add all pages from the reader to the writer
     for page in pdf_reader.pages:
         writer.add_page(page)
-
-    # Save the new PDF to a file
     with open("decrypted-pdf.pdf", "wb") as f:
         writer.write(f)
-
-    # Read table data from the new PDF
     try:
         extract_table_data("decrypted-pdf.pdf")
     except Exception as e:
-        print(f"Error reading table data: {e}")
+        logging.error(f"Error reading table data: {e}")
 
 def extract_table_data(file):
-    """
-    Extract tables from the PDF, clean the data, and save it to a database.
-    """
+    logging.debug('Entering extract_table_data function')
     with pdfplumber.open(file) as pdf:
         all_tables = []
         for page in pdf.pages:
             tables = page.extract_tables()
             for table in tables:
-                # Convert the table into a DataFrame
                 df = pd.DataFrame(table[1:], columns=table[0])
                 all_tables.append(df)
-
     if not all_tables:
         raise ValueError("No tables found in PDF")
 
-    # Clean each table and combine them into a single DataFrame
     cleaned_dfs = [clean_data(df) for df in all_tables if not df.empty]
     if not cleaned_dfs:
         raise ValueError("No non-empty tables found to process")
     
     combined_df = pd.concat(cleaned_dfs, ignore_index=True)
-    print(combined_df)
+    logging.debug('Combined DataFrame created')
 
-    # Extract 'Date' and 'Balance' columns, ensuring they match in order
     if {'Date', 'Balance'}.issubset(combined_df.columns):
         filtered_df = combined_df.dropna(subset=['Date', 'Balance'])
         date_list = filtered_df['Date'].tolist()
         balance_list = filtered_df['Balance'].tolist()
-        print("Date List:", date_list)
-        print("Balance List:", balance_list)
+        logging.debug(f"Date List: {date_list}")
+        logging.debug(f"Balance List: {balance_list}")
 
-        # Plotting the data
         fig, ax = plt.subplots(figsize=(5, 2.7), layout='constrained')
         categories = date_list
-
         ax.bar(categories, balance_list)
         plt.title('Bank Balance Over Time')
         plt.grid()
         plt.show()
+
+        emailSender("output.jpg")
     else:
-        print("Date or Balance column not found in the DataFrame")
+        logging.warning("Date or Balance column not found in the DataFrame")
         return [], []
 
-    # Save cleaned data to SQLite database
     save_to_database(combined_df)
 
 def clean_data(df):
-    """
-    Clean the data by handling missing values and renaming columns.
-    """
-    # Drop columns and rows where all values are NaN
+    logging.debug('Entering clean_data function')
     df = df.dropna(axis=1, how='all').dropna(how='all')
-
     if df.shape[1] == 0:
         raise ValueError("No columns left after dropping empty columns")
 
-    # Forward fill to handle missing data
     df = df.ffill()
     num_columns = df.shape[1]
     
-    # Rename columns based on expected format
     if num_columns >= 5:
         df.columns = ['Date', 'Description', 'Debit', 'Credit', 'Balance'] + [f'Extra_{i}' for i in range(num_columns - 5)]
     else:
         raise ValueError(f"Unexpected number of columns: {num_columns}")
 
-    # Drop rows where 'Date' is NaN and reset index
     df = df.dropna(subset=['Date'])
     df.reset_index(drop=True, inplace=True)
 
     return df
 
 def save_to_database(df):
-    """
-    Save the cleaned data to an SQLite database.
-    """
+    logging.debug('Entering save_to_database function')
     con = sqlite3.connect("table.db")
     cur = con.cursor()
-    
-    # Create table if it doesn't exist
     cur.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
             Date TEXT,
@@ -115,42 +109,36 @@ def save_to_database(df):
             Balance REAL
         )
     """)
-
-    # Insert DataFrame rows into the database
     for _, row in df.iterrows():
         cur.execute("INSERT INTO transactions VALUES (?, ?, ?, ?, ?)", row[:5])
-    
     con.commit()
     con.close()
 
-def assas():
-    # Get the file path from the user
-    file_path = GUI.popup_get_file('Please enter a filename')
 
-    # Loop until a valid file path is provided or the user chooses to quit
+def assas():
+    logging.debug('Entering assas function')
+    file_path = GUI.popup_get_file('Please enter a filename')
     while not file_path:
         if GUI.popup_yes_no('No file selected, do you want to try again?') == 'Yes':
             file_path = GUI.popup_get_file('Please enter a filename')
         else:
-            quit()
+            logging.debug('User chose not to select a file')
+            return  # Avoid calling quit()
 
-    # Create a PdfReader object
     pdf_reader = PdfReader(file_path)
-
-    # Check if the PDF is encrypted
     if pdf_reader.is_encrypted:
         while True:
             password = GUI.popup_get_text('Please enter your password:')
             try:
-                # Attempt to decrypt the PDF with the provided password
                 pdf_reader.decrypt(password)
                 create_decrypted_pdf(pdf_reader)
                 break
             except Exception as e:
-                # If decryption fails, ask the user if they want to try again
+                logging.error(f"Error decrypting PDF: {e}")
                 if GUI.popup_yes_no('Wrong password, do you want to try again?') != 'Yes':
-                    quit()
+                    return  # Avoid calling quit()
     else:
         create_decrypted_pdf(pdf_reader)
 
-    print("Done")
+    logging.debug("Process completed successfully")
+
