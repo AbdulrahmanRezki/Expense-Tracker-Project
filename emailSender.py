@@ -13,10 +13,12 @@ def EmailSender(content):
         if GUI.popup_ok_cancel()=="Cancel":
             exit()
         else:
-        
-            yag = yagmail.SMTP('bankstatment14@gmail.com', 'ytdw ctkl hths wpqe')
-
-            yag.send(emailAddress, 'subject', content)
             
-        
-        #orginal code:somethingSomething123
+            yag = yagmail.SMTP('example@gmail.com', 'XXXXXXXXXXXXXXX')
+            
+            try:
+                
+                yag.send(emailAddress, 'subject', content)
+                GUI.popup("We've sent you an email.")
+            except Exception as e:
+                GUI.popup(f"Failed to send email. Error: {str(e)}")
